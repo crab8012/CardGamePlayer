@@ -15,12 +15,10 @@ import com.badlogic.gdx.scenes.scene2d.utils.ClickListener;
 import com.badlogic.gdx.utils.DataOutput;
 import com.badlogic.gdx.utils.viewport.FitViewport;
 import com.badlogic.gdx.utils.viewport.Viewport;
+import space.crab8012.cardgameplayer.gameobjects.GameState;
 import space.crab8012.cardgameplayer.gameobjects.Player;
 
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
-import java.io.ObjectOutputStream;
-import java.io.OutputStream;
+import java.io.*;
 import java.net.Socket;
 
 public class TestNetwork implements Screen {
@@ -124,31 +122,14 @@ public class TestNetwork implements Screen {
         stage.addActor(mainTable);
     }
 
-    public void serverStuff(){
-            String serverMessage = "";
-            try{
-                Socket s = new Socket(serverIP, 8888);
-                s.setSoTimeout(1000); //Set the socket timeout to 1 second.
-                DataInputStream din = new DataInputStream(s.getInputStream());
-                DataOutputStream dout = new DataOutputStream(s.getOutputStream());
-                dout.writeUTF(prefs.getString("name", "DEFAULT_PLAYER_NAME"));
-                dout.flush();
-                serverMessage = din.readUTF();
-                dout.close();
-                s.close();
-
-                notificationDialog("Message Recieved", "Recieved message '" + serverMessage + "' from the server");
-            }catch(Exception e){
-                System.out.println(e);
-            }
-    }
-
     public void sendPlayerObject(String name, String icon, int score){
         try {
             //Set up the basic networking crap
             Socket s = new Socket(prefs.getString("serveraddress", serverIP), 8888);
             OutputStream os = s.getOutputStream();
             ObjectOutputStream oos = new ObjectOutputStream(os);
+            InputStream is = s.getInputStream();
+            ObjectInputStream ois = new ObjectInputStream(is);
 
             //Create the test player object
             Player testPlayer = new Player(name, icon);
@@ -156,7 +137,9 @@ public class TestNetwork implements Screen {
 
             oos.writeObject(testPlayer); // Send the player object to the server.
             oos.flush();
-            notificationDialog("Sent Player", "Sent Player " + name + " with Icon " + icon + "\nwith Score: " + score);
+
+            GameState gs = (GameState)ois.readObject();
+            notificationDialog("Sent Player", "Sent Player " + name + " with Icon " + icon + "\nwith Score: " + score + "\nAlso Recieved GameState, name " + gs.getGameName());
 
             oos.close();
             s.close(); // Close the network socket.

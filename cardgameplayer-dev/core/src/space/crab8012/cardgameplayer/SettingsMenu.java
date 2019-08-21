@@ -32,6 +32,7 @@ public class SettingsMenu implements Screen {
     float bgmVolume;
 
     String name;
+    String serverAddress;
 
 
     public SettingsMenu(){
@@ -51,6 +52,7 @@ public class SettingsMenu implements Screen {
 
 
         prefs = Gdx.app.getPreferences("settings");
+        serverAddress = prefs.getString("serveraddress", "Remote Server");
         name = prefs.getString("name", "Player");
         sfxVolume = prefs.getFloat("sfxVol", 0);
         bgmVolume = prefs.getFloat("bgmVol", 0);
@@ -73,7 +75,7 @@ public class SettingsMenu implements Screen {
         TextButton fullscreenButton = new TextButton(Gdx.graphics.isFullscreen() + "", skin);
 
         Label setRemoteServerLabel = new Label("Set Remote Server", skin);
-        final TextButton setRemoteServerButton = new TextButton("Set Remote Server", skin);
+        final TextButton setRemoteServerButton = new TextButton(serverAddress, skin);
 
         Label setPlayerNameLabel = new Label("Set Player Name", skin);
         final TextButton setPlayerNameButton = new TextButton(name, skin);
@@ -110,8 +112,8 @@ public class SettingsMenu implements Screen {
                     @Override
                     public void input(String text) {
                         prefs.putString("serveraddress", text);
-                        setRemoteServerButton.setText(name);
-                        System.out.println(name);
+                        setRemoteServerButton.setText(text);
+                        System.out.println(text);
                     }
 
                     @Override

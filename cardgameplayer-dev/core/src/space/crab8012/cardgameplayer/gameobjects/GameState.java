@@ -14,9 +14,35 @@ public class GameState implements Serializable {
     int numConnectedPlayers = 0;
     int cardsPlayed = 0;
     Player currentPlayer, lastPlayer;
+    boolean gameStarted = false;
+    public String gameName = "";
+
+    public void setMaxGameSize(int maxGameSize) {
+        this.maxGameSize = maxGameSize;
+    }
+
+    public String getGameName() {
+        return gameName;
+    }
+
+    public void setGameName(String gameName) {
+        this.gameName = gameName;
+    }
+
+    public boolean isGameStarted() {
+        return gameStarted;
+    }
+
+    public void setGameStarted(boolean gameStarted) {
+        this.gameStarted = gameStarted;
+    }
 
     public GameState(GameMode game){
         this.game = game;
+    }
+
+    public GameState(){
+        this.game = null;
     }
 
     public ArrayList<Card> getDeck() {
@@ -165,4 +191,7 @@ public class GameState implements Serializable {
         System.out.println("Player " + currentPlayer.getName() + " has won the game!");
     }
 
+    public ArrayList<Player> getPlayers() {
+        return players;
+    }
 }
