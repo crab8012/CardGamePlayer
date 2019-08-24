@@ -12,29 +12,36 @@ import com.badlogic.gdx.scenes.scene2d.InputEvent;
 import com.badlogic.gdx.scenes.scene2d.Stage;
 import com.badlogic.gdx.scenes.scene2d.ui.*;
 import com.badlogic.gdx.scenes.scene2d.utils.ClickListener;
-import com.badlogic.gdx.utils.DataOutput;
+import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.utils.viewport.FitViewport;
 import com.badlogic.gdx.utils.viewport.Viewport;
 import space.crab8012.cardgameplayer.gameobjects.GameState;
 import space.crab8012.cardgameplayer.gameobjects.Player;
 import space.crab8012.cardgameplayer.gameobjects.ServerCommand;
 
-import java.io.*;
+import java.io.InputStream;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.io.OutputStream;
 import java.net.Socket;
 import java.util.ArrayList;
 
-public class TestNetwork implements Screen {
-
-    /*
-     * An ENUM that mirrors an enum to be added to the client.
+public class RockPaperScissors implements Screen {
+    /* An ENUM that mirrors an enum to be added to the client.
      * It is intended to evolve as the client-server pair evolve.
      */
     // GETPLAYER - Request to get a player object.
     // SENDPLAYER - Response to a GETPLAYER request. Generally a Player object.
     // UPDATEGAMESTATE - Response-less command. Sent from Server to Client. Contains GameState.
+    // GETMOVE - Tell the client to send over the player's move.
+    // SENDMOVE - Send the server the player's move.
+    // SENDWINNER - Send the client the winning player.
 
     enum COMMANDS {
-        GETPLAYER, UPDATEGAMESTATE, SENDPLAYER
+        GETPLAYER, UPDATEGAMESTATE, SENDPLAYER, GETMOVE, SENDWINNER, QUIT
+    }
+    enum RPSMOVES {
+        ROCK, PAPER, SCISSORS
     }
 
     private SpriteBatch batch;
@@ -44,13 +51,15 @@ public class TestNetwork implements Screen {
     private TextureAtlas atlas;
     protected Skin skin;
 
+    public static RPSMOVES move;
+
     Preferences prefs;
 
     int sf = 1; //The viewport scaling factor
 
     String serverIP = "192.168.2.138";
 
-    public TestNetwork()
+    public RockPaperScissors()
     {
         prefs = Gdx.app.getPreferences("settings");
 
@@ -87,31 +96,17 @@ public class TestNetwork implements Screen {
         mainTable.center();
 
         //Create Title Object
-        Label roomNameLabel = new Label("Network Test Room", skin, "font", new Color(1, 1, 1, 1));
+        Label roomNameLabel = new Label("Rock Paper Scissors Game", skin, "font", new Color(1, 1, 1, 1));
         roomNameLabel.setFontScale(3);
         //Create buttons
-        TextButton sendPlayerButton1 = new TextButton("Send 'John Deer'", skin);
-        TextButton sendPlayerButton2 = new TextButton("Send 'Legoman888'", skin);
-        TextButton sendPlayerButton3 = new TextButton("Send 'MrPuggles'", skin);
+        TextButton playGameButton = new TextButton("Connect to Game", skin);
         TextButton mainMenuButton = new TextButton("Main Menu", skin);
 
         //Add listeners to buttons
-        sendPlayerButton1.addListener(new ClickListener(){
+        playGameButton.addListener(new ClickListener(){
             @Override
             public void clicked(InputEvent event, float x, float y) {
                 sendPlayerObject("John Deer", "default", 5);
-            }
-        });
-        sendPlayerButton2.addListener(new ClickListener(){
-            @Override
-            public void clicked(InputEvent event, float x, float y) {
-                sendPlayerObject("Legoman888", "blue-lego", 0);
-            }
-        });
-        sendPlayerButton3.addListener(new ClickListener(){
-            @Override
-            public void clicked(InputEvent event, float x, float y) {
-                sendPlayerObject("MrPuggles", "pixel-pug", 20);
             }
         });
         mainMenuButton.addListener(new ClickListener(){
@@ -123,12 +118,6 @@ public class TestNetwork implements Screen {
 
         //Add buttons to table
         mainTable.add(roomNameLabel);
-        mainTable.row();
-        mainTable.add(sendPlayerButton1).width(400).uniform();
-        mainTable.row();
-        mainTable.add(sendPlayerButton2).width(400).uniform();
-        mainTable.row();
-        mainTable.add(sendPlayerButton3).width(400).uniform();
         mainTable.row();
         mainTable.add(mainMenuButton).width(400).uniform();
 
@@ -149,15 +138,27 @@ public class TestNetwork implements Screen {
             Player testPlayer = new Player(name, icon);
             testPlayer.setScore(score);
 
-            ServerCommand c = (ServerCommand)ois.readObject();
-            ArrayList<Object> payload = new ArrayList();
-            payload.add(testPlayer);
-            if(c.getCommand().equals(COMMANDS.GETPLAYER)){
-                oos.writeObject(new ServerCommand(COMMANDS.SENDPLAYER.name(), payload));
-            }
-            oos.writeObject(testPlayer); // Send the player object to the server.
-            oos.flush();
 
+            while(true) {
+                ServerCommand c = (ServerCommand)ois.readObject();
+                ArrayList<Object> payload = new ArrayList();
+
+                if(c.getCommand().equals(COMMANDS.QUIT)){
+                    break;
+                }else if(c.getCommand().equals(COMMANDS.GETMOVE)){
+                    payload.add(testPlayer);
+                    payload.add(getMove());
+                    oos.writeObject(new ServerCommand(COMMANDS.GETMOVE.name(), payload));
+                }else if(c.getCommand().equals(COMMANDS.GETPLAYER)){
+                    payload.add(testPlayer);
+                    oos.writeObject(new ServerCommand(COMMANDS.SENDPLAYER.name(), payload));
+                }else if(c.getCommand().equals(COMMANDS.SENDWINNER)){
+                    notifyOfWinner(c.getPayload());
+                }
+
+
+                oos.flush();
+            }
             GameState gs = (GameState)ois.readObject();
             notificationDialog("Sent Player", "Sent Player " + name + " with Icon " + icon + "\nwith Score: " + score + "\nAlso Recieved GameState, name " + gs.getGameName());
 
@@ -168,6 +169,23 @@ public class TestNetwork implements Screen {
             System.out.println(e);
         }
 
+    }
+
+    public RPSMOVES getMove(){
+        new Dialog("RPS MOVE SELECTION", skin) {
+            protected void result (Object object) {
+                move = (RPSMOVES)object;
+            }
+        }.text("Which Symbol do you wish to throw?\n\n\tChoose Wisely!!").button("ROCK", RPSMOVES.ROCK).button("PAPER", RPSMOVES.PAPER).button("SCISSORS", RPSMOVES.SCISSORS)
+                .key(Input.Keys.R, RPSMOVES.ROCK).key(Input.Keys.P, RPSMOVES.PAPER).key(Input.Keys.S, RPSMOVES.SCISSORS).show(stage);
+        return move;
+    }
+
+    public void notifyOfWinner(ArrayList<Object> list){
+        String winnerName = ((Player)list.get(0)).getName();
+        String winnerMove = ((RPSMOVES)list.get(1)).name();
+
+        notificationDialog("PLAYER WINS!!!", "Player " + winnerName + " WINS!\nThey used " + winnerMove + "!");
     }
 
     public void notificationDialog(String title, String message){

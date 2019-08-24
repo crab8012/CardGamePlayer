@@ -66,7 +66,8 @@ public class MainMenu implements Screen {
         mainTable.center();
 
         //Create buttons
-        TextButton quickConnectButton = new TextButton("Quick Connect", skin);
+        TextButton quickConnectButton = new TextButton("Server Tests", skin);
+        TextButton rpsGameButton = new TextButton("Rock Paper Scissors Game", skin);
         TextButton serverBrowserButton = new TextButton("Server Browser", skin);
         TextButton optionsButton = new TextButton("Options", skin);
         TextButton exitButton = new TextButton("Exit", skin);
@@ -81,6 +82,12 @@ public class MainMenu implements Screen {
             @Override
             public void clicked(InputEvent event, float x, float y) {
                 ((Game)Gdx.app.getApplicationListener()).setScreen(new TestNetwork());
+            }
+        });
+        rpsGameButton.addListener(new ClickListener(){
+            @Override
+            public void clicked(InputEvent event, float x, float y) {
+                ((Game)Gdx.app.getApplicationListener()).setScreen(new RockPaperScissors());
             }
         });
         serverBrowserButton.addListener(new ClickListener(){
@@ -110,6 +117,8 @@ public class MainMenu implements Screen {
         mainTable.add(gameNameLabel);
         mainTable.row();
         mainTable.add(quickConnectButton).width(400).uniform();
+        mainTable.row();
+        mainTable.add(rpsGameButton).width(400).uniform();
         mainTable.row();
         mainTable.add(serverBrowserButton).width(400).uniform();
         mainTable.row();
