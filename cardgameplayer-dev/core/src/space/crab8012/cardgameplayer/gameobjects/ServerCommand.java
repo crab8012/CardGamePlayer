@@ -1,7 +1,8 @@
 package space.crab8012.cardgameplayer.gameobjects;
 
+import space.crab8012.cardgameplayer.payloads.Payload;
+
 import java.io.Serializable;
-import java.util.ArrayList;
 
 /*
  *  ServerCommand
@@ -15,23 +16,55 @@ import java.util.ArrayList;
  */
 
 public class ServerCommand implements Serializable {
+    private String id;
     private String command;
-    private ArrayList<Object> payload;
+    private Payload payload;
 
-    public ServerCommand(String command, ArrayList<Object> payload){
+    public ServerCommand(String command, Payload payload, String id){
         this.command = command;
         this.payload = payload;
+        this.id = id;
+    }
+
+    public ServerCommand(String command, String id){
+        this.command = command;
+        this.payload = null;
+        this.id = id;
+    }
+
+    public ServerCommand(String command, Payload payload){
+        this.command = command;
+        this.payload = payload;
+        this.id = null;
+    }
+
+    public ServerCommand(String command){
+        this.command = command;
+        this.payload = null;
+        this.id = null;
     }
 
     public String getCommand() {
         return command;
     }
 
-    public ArrayList<Object> getPayload() {
+    public Payload getPayload() {
         return payload;
+    }
+
+    public void setPayload(Payload payload) {
+        this.payload = payload;
     }
 
     public void setCommand(String command){
         this.command = command;
+    }
+
+    public String getId() {
+        return id;
+    }
+
+    public void setId(String id) {
+        this.id = id;
     }
 }

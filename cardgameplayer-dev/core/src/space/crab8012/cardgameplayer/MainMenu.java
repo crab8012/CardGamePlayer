@@ -81,7 +81,7 @@ public class MainMenu implements Screen {
         quickConnectButton.addListener(new ClickListener(){
             @Override
             public void clicked(InputEvent event, float x, float y) {
-                ((Game)Gdx.app.getApplicationListener()).setScreen(new TestNetwork());
+                new Dialog("Feature Not Implemented", skin).text("Unfortunately, we don't have a\nserver browser yet. Check back later.").button("OK", true).key(Input.Keys.ENTER, true).show(stage);
             }
         });
         rpsGameButton.addListener(new ClickListener(){
